@@ -1,0 +1,18 @@
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - GENERIC_TIMEZONE=UTC
+      - WEBHOOK_URL=${N8N_PUBLIC_URL:-http://localhost:5678}/
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      # Needed by the signature-verification Code node and for reading secrets from env.
+      - NODE_FUNCTION_ALLOW_BUILTIN=crypto
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      # Shared secrets / endpoints (never hard-coded in workflow JSON)
+      - N8N_WEBHOOK_SECRET=${N8N_WEBHOOK_SECRET}
+      - CONVEX_SITE_URL=${CONVEX_SITE_URL}
+    volumes:
+      - ./.n8n-data:/home/node/.n8n

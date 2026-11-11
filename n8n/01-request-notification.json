@@ -1,0 +1,72 @@
+{
+  "name": "LendLoop - Request notification",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lendloop-request",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000001",
+      "name": "Convex Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "lendloop-request"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Verify HMAC-SHA256 signature from Convex. Throws => execution fails (visible via error workflow, Convex retries).\nconst crypto = require('crypto');\nconst secret = $env.N8N_WEBHOOK_SECRET;\nif (!secret) throw new Error('N8N_WEBHOOK_SECRET is not configured');\n\nconst headers = $input.first().json.headers;\nconst body = $input.first().json.body;\nconst ts = headers['x-lendloop-timestamp'];\nconst sig = (headers['x-lendloop-signature'] || '').replace('sha256=', '');\n\n// Reject stale requests (replay protection): 5 minute window.\nif (!ts || Math.abs(Date.now() - Number(ts)) > 5 * 60 * 1000) throw new Error('Stale or missing timestamp');\n\n// Convex signs `${ts}.${compact JSON body}`; JSON.stringify of the parsed body reproduces it.\nconst expected = crypto.createHmac('sha256', secret).update(`${ts}.${JSON.stringify(body)}`).digest('hex');\n\nconst a = Buffer.from(expected, 'hex');\nconst b = Buffer.from(sig, 'hex');\nif (a.length !== b.length || !crypto.timingSafeEqual(a, b)) throw new Error('Invalid signature');\n\nreturn [{ json: body }];"
+      },
+      "id": "a1000000-0000-4000-8000-000000000002",
+      "name": "Verify signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build a message using only the minimal fields in the payload.\nconst p = $input.first().json;\nconst msgs = {\n  request_created: `${p.otherPartyName} wants to borrow your ${p.toolName} (${p.startDate} -> ${p.endDate}).`,\n  request_approved: `${p.otherPartyName} approved your request for ${p.toolName} (${p.startDate} -> ${p.endDate}).`,\n  request_declined: `${p.otherPartyName} declined your request for ${p.toolName}.`,\n  loan_returned: `${p.toolName} was marked as returned. Thanks for using LendLoop!`,\n};\nreturn [{ json: {\n  to: p.recipient.email,\n  name: p.recipient.name,\n  subject: `LendLoop: ${p.event.replace('_', ' ')}`,\n  text: msgs[p.event] || 'Your LendLoop request was updated.',\n  idempotencyKey: p.idempotencyKey,\n} }];"
+      },
+      "id": "a1000000-0000-4000-8000-000000000003",
+      "name": "Build message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// MOCK notification: logged only. Swap this node for Email / Slack / Discord in production.\nconst m = $input.first().json;\nconsole.log(`[NOTIFY] to=${m.name} <${m.to}> | ${m.subject} | ${m.text}`);\nreturn [{ json: { ok: true, idempotencyKey: m.idempotencyKey } }];"
+      },
+      "id": "a1000000-0000-4000-8000-000000000004",
+      "name": "Send notification (mock)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 0],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true } }}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "a1000000-0000-4000-8000-000000000005",
+      "name": "Respond 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [880, 0]
+    }
+  ],
+  "connections": {
+    "Convex Webhook": { "main": [[{ "node": "Verify signature", "type": "main", "index": 0 }]] },
+    "Verify signature": { "main": [[{ "node": "Build message", "type": "main", "index": 0 }]] },
+    "Build message": { "main": [[{ "node": "Send notification (mock)", "type": "main", "index": 0 }]] },
+    "Send notification (mock)": { "main": [[{ "node": "Respond 200", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "active": false
+}

@@ -1,0 +1,28 @@
+{
+  "name": "LendLoop - Error handler",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "c3000000-0000-4000-8000-000000000001",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Failed runs must never be silent. Replace with Slack/Email/PagerDuty in production.\nconst e = $input.first().json;\nconsole.error(`[ALERT] Workflow \"${e.workflow?.name}\" failed at node \"${e.execution?.lastNodeExecuted}\": ${e.execution?.error?.message} (execution ${e.execution?.id})`);\nreturn [{ json: { alerted: true, workflow: e.workflow?.name, error: e.execution?.error?.message } }];"
+      },
+      "id": "c3000000-0000-4000-8000-000000000002",
+      "name": "Alert (mock)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0]
+    }
+  ],
+  "connections": {
+    "Error Trigger": { "main": [[{ "node": "Alert (mock)", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "active": false
+}
