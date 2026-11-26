@@ -102,7 +102,8 @@ export const recordEvent = internalMutation({
 /** Convex -> n8n. Signed, retried with exponential backoff, failures recorded (never silent). */
 export const sendWebhook = internalAction({
   args: { loanId: v.id("loans"), event: eventValidator, attempt: v.number() },
-  handler: async (ctx, { loanId, event, attempt }) => {
+  // Explicit return type: the action schedules itself, which otherwise makes inference circular.
+  handler: async (ctx, { loanId, event, attempt }): Promise<void> => {
     const key = `notify:${event}:${loanId}`;
     if (await ctx.runQuery(internal.automation.alreadySent, { key })) return; // retry-safe
 

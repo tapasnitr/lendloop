@@ -16,8 +16,8 @@ function PublicTools() {
         <p className="muted">Nothing listed yet. Be the first to lend something!</p>
       ) : (
         <ul className="grid">
-          {tools.map((t) => (
-            <li key={t.key} className="card">
+          {tools.map((t, i) => (
+            <li key={i} className="card">
               <strong>{t.name}</strong>
               <span className="tag">{t.category}</span>
             </li>

@@ -11,7 +11,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Failed runs must never be silent. Replace with Slack/Email/PagerDuty in production.\nconst e = $input.first().json;\nconsole.error(`[ALERT] Workflow \"${e.workflow?.name}\" failed at node \"${e.execution?.lastNodeExecuted}\": ${e.execution?.error?.message} (execution ${e.execution?.id})`);\nreturn [{ json: { alerted: true, workflow: e.workflow?.name, error: e.execution?.error?.message } }];"
+        "jsCode": "// Failed runs must never be silent. Replace with Slack/Email/PagerDuty in production.\nconst e = $input.first().json;\nconsole.log(`[ALERT] Workflow \"${e.workflow?.name}\" failed at node \"${e.execution?.lastNodeExecuted}\": ${e.execution?.error?.message} (execution ${e.execution?.id})`);\nreturn [{ json: { alerted: true, workflow: e.workflow?.name, error: e.execution?.error?.message } }];"
       },
       "id": "c3000000-0000-4000-8000-000000000002",
       "name": "Alert (mock)",

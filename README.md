@@ -63,7 +63,7 @@ Convex Cloud must be able to reach n8n, so expose it with a tunnel while develop
 3. Import `n8n/01…`, `02…`, `03…` (Workflows → Import from file).
 4. Create a **Header Auth** credential named **Convex API Key**: name `Authorization`, value `Bearer <N8N_API_KEY>`. Select it on the two HTTP Request nodes in workflow 2.
 5. In workflows 1 and 2 → Settings → **Error workflow** = "LendLoop - Error handler".
-6. Activate workflows 1 and 2. (Use the Test URL while building, Production URL once active.)
+6. Publish (activate) all three workflows. `N8N_WEBHOOK_URL` must use the Production URL (`/webhook/…`); use the Test URL only while editing in n8n.
 
 Try it: sign in as two users, list a tool as A, request it as B → n8n logs `[NOTIFY] …`. To test overdue reminders, approve a loan whose end date is in the past (edit the date in the Convex dashboard), then run workflow 2 manually.
 
@@ -96,6 +96,6 @@ No secret is stored in code or in the exported workflow JSON (the API key lives 
 
 - Signature is verified over `JSON.stringify(parsedBody)` rather than the raw bytes (simpler in n8n; works because Convex sends compact JSON). Production should verify the raw body.
 - Notifications are **mock/logged**; swap the Code nodes for Email/Slack/Discord.
-- `convex/_generated` is produced by `npx convex dev`; not committed.
+- `convex/_generated` is committed so type checking works on a fresh clone; `npx convex dev` keeps it up to date.
 
 See [PRODUCTION.md](PRODUCTION.md) for what I would change before shipping.

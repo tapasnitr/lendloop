@@ -1,6 +1,6 @@
 services:
   n8n:
-    image: n8nio/n8n:latest
+    image: n8nio/n8n:2.49.7
     restart: unless-stopped
     ports:
       - "5678:5678"
@@ -11,6 +11,9 @@ services:
       # Needed by the signature-verification Code node and for reading secrets from env.
       - NODE_FUNCTION_ALLOW_BUILTIN=crypto
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      # Print Code-node console output (mock notifications and alerts) to the container log.
+      - CODE_ENABLE_STDOUT=true
+      - N8N_DIAGNOSTICS_ENABLED=false
       # Shared secrets / endpoints (never hard-coded in workflow JSON)
       - N8N_WEBHOOK_SECRET=${N8N_WEBHOOK_SECRET}
       - CONVEX_SITE_URL=${CONVEX_SITE_URL}

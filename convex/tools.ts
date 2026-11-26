@@ -22,7 +22,7 @@ export const listPublic = query({
     const tools = await ctx.db.query("tools").order("desc").take(100);
     return tools
       .filter((t) => !onLoan.has(t._id))
-      .map((t) => ({ key: t._id.toString(), name: t.name, category: t.category }));
+      .map((t) => ({ name: t.name, category: t.category }));
   },
 });
 
